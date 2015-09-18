@@ -37,10 +37,10 @@ public class MathEvaluatorTest {
   }
 
   @Test public void testComplex() {
-    assertEquals(new MathEvaluator().calculate("2 / (2 + 3) * 4.33 - -6"), 7.732, 0.01);
+    assertEquals(new MathEvaluator().calculate("(2 / (2 + 3) * 4.33) - -6"), 7.732, 0.01);
   }
 
   @Test public void testComplex2() {
-    assertEquals(new MathEvaluator().calculate("6 + -( -4)"), 10d, 0.01);
+    assertEquals(new MathEvaluator().calculate("12*123/-(-5 + 2) + 7"), 499d, 0.01);
   }
 }
