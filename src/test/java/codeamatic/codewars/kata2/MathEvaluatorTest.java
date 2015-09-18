@@ -43,4 +43,8 @@ public class MathEvaluatorTest {
   @Test public void testComplex2() {
     assertEquals(new MathEvaluator().calculate("12*123/-(-5 + 2) + 7"), 499d, 0.01);
   }
+
+  @Test public void testNestedNested() {
+    assertEquals(new MathEvaluator().calculate("(1 - 2) + -(-(-(-4)))"), 499d, 0.01);
+  }
 }
