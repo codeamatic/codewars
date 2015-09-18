@@ -23,6 +23,7 @@ public class MathEvaluator {
       return Double.parseDouble(expression);
     }
 
+
     // Get count of opening parentheses.  Kata said that all expressions will be valid
     // so we will assume all opening paren has closing paren
     int parenCount = expression.length() - expression.replace("(", "").length();
@@ -100,6 +101,20 @@ public class MathEvaluator {
     }
 
     return rawList;
+  }
+
+  /**
+   * Breaks the expression down into a clean formatted
+   * mathematical expression.  This process will attempt to add and remove characters
+   * and variables where necessary.
+   *
+   * <p>Example: 1 + -(4) => 1 + (-1 * (4))
+   *
+   * @param expression
+   * @return
+   */
+  public String preprocessExpression(String expression) {
+    return "";
   }
 
   /**
