@@ -45,6 +45,6 @@ public class MathEvaluatorTest {
   }
 
   @Test public void testNestedNested() {
-    assertEquals(new MathEvaluator().calculate("(1 - 2) + -(-(-(-4)))"), 499d, 0.01);
+    assertEquals(new MathEvaluator().calculate("(1 - 2) + -(-(-(-4)))"), 3d, 0.01);
   }
 }

@@ -10,24 +10,41 @@ import java.util.regex.Pattern;
 /**
  * Kata 2
  *
+ * NOT PRETTY AND WAYYYYY TOO MUCH CODE.
+ *
  * http://www.codewars.com/kata/52a78825cdfc2cfc87000005/train/java
  */
 public class MathEvaluator {
 
-  private static final String ONLY_NUM_REGEX = "(\\d+\\.\\d+|-\\d+|\\d+)";
+  private static final String ONLY_NUM_REGEX = "(-?\\d*)|(-?\\d*\\.{1}\\d+)";
 
   private static final String PAREN_REGEX = "\\((.+?)\\)";
 
   private static final String ACTION_REGEX = "(\\+|-|\\/|\\*)";
 
-  private static final String CLEAN_REGEX = "(\\+|-|\\/|\\*)-((\\(|\\d\\()(.+?)\\))";
+  private static final String CLEAN_REGEX = "(\\+|-|\\/|\\*|\\()?(-\\d*)\\(([^(]+?)\\)";
 
   public double calculate(String expression) {
+    // remove all spaces
+    expression = expression.replace(" ", "");
     expression = preprocessExpression(expression);
+    expression = processParentheses(expression);
 
+    Double finalResult = Double.parseDouble(parseExpression(expression));
+
+    return Double.parseDouble(new DecimalFormat("#.00").format(finalResult));
+  }
+
+  /**
+   * Attempts to reduce the complexity of nested parentheses or simply breaks the parentheses down
+   * and processes them.
+   *
+   * @return expression String with parentheses either removed or reduced
+   */
+  private String processParentheses(String exp) {
     // Get count of opening parentheses.  Kata said that all expressions will be valid
     // so we will assume all opening paren has closing paren
-    Matcher m = Pattern.compile(PAREN_REGEX).matcher(expression);
+    Matcher m = Pattern.compile(PAREN_REGEX).matcher(exp);
 
     while (m.find()) {
       String grpContents = m.group(1);
@@ -38,25 +55,23 @@ public class MathEvaluator {
         continue;
       }
       String parseExpression = parseExpression(grpContents);
-      expression = expression.replace("(" + grpContents + ")", parseExpression);
+      exp = exp.replace("(" + grpContents + ")", parseExpression);
     }
 
-    while (expression.contains("(")) {
+    while (exp.contains("(")) {
       // recursively break down expression until no parentheses exist
-      int ixLastOpenParen = expression.lastIndexOf("(");
-      int ixFirstCloseParen = ixLastOpenParen + expression.substring(ixLastOpenParen).indexOf(")");
+      int ixLastOpenParen = exp.lastIndexOf("(");
+      int ixFirstCloseParen = ixLastOpenParen + exp.substring(ixLastOpenParen).indexOf(")");
 
-      String subExpression = expression.substring(ixLastOpenParen + 1, ixFirstCloseParen);
+      String subExpression = exp.substring(ixLastOpenParen + 1, ixFirstCloseParen);
       String parsedExpression = parseExpression(subExpression);
 
-      String parenSub = expression.substring(ixLastOpenParen, ixFirstCloseParen + 1);
+      String parenSub = exp.substring(ixLastOpenParen, ixFirstCloseParen + 1);
       // reset expression with replaced parenthese subs
-      expression = expression.replace(parenSub, parsedExpression);
+      exp = exp.replace(parenSub, parsedExpression);
     }
 
-    Double finalResult = Double.parseDouble(parseExpression(expression));
-
-    return Double.parseDouble(new DecimalFormat("#.00").format(finalResult));
+    return exp;
   }
 
   /**
@@ -64,7 +79,7 @@ public class MathEvaluator {
    *
    * @return string result
    */
-  public String parseExpression(String subExpression) {
+  private String parseExpression(String subExpression) {
     // check for only numbers (neg/pos)
     if (subExpression.matches(ONLY_NUM_REGEX)) {
       return subExpression;
@@ -116,7 +131,7 @@ public class MathEvaluator {
    * @param rawList the raw unsanitized list of tokens
    * @return sanitized ArrayList of string
    */
-  public List<String> sanitizeTokens(List<String> rawList) {
+  private List<String> sanitizeTokens(List<String> rawList) {
     // Check for negative number at front of expression
     if (rawList.get(0).equals("-")) {
       rawList.remove(0);
@@ -148,25 +163,39 @@ public class MathEvaluator {
    *
    * @return a cleaner expression
    */
-  public String preprocessExpression(String expression) {
-    // remove all spaces
-    expression = expression.replace(" ", "");
-
-    Matcher m = Pattern.compile(CLEAN_REGEX).matcher(expression);
+  private String preprocessExpression(String expression) {
+    Pattern p = Pattern.compile(CLEAN_REGEX);
+    Matcher m = p.matcher(expression);
 
     // Build expression up into a more formal version
     while (m.find()) {
-      String leftSideGrp = m.group(3);
-      String
-          leftSideExpression =
-          (leftSideGrp.length() > 1) ? "-" + leftSideGrp.substring(0, leftSideGrp.length() - 1)
-                                     : "-1";
-      String insideGrp = m.group(4);
+      String negationReplacer;
+      String parsedExpression = "";
 
-      String insideParsedExpression = parseExpression(insideGrp);
-      String parsedExpression = parseExpression(leftSideExpression + "*" + insideParsedExpression);
+      // check for group 1
+      try {
+        if (m.group(1) != null) {
+          // If the negation is not associated with a numeral
+          negationReplacer = (m.group(2).equals("-")) ? "1*" : m.group() + "*";
+          String insideGrp = m.group(3);    // math inside of parentheses => X + Y * 3 * V
+          String insideParsedExpression = parseExpression(insideGrp);
+          parsedExpression =
+              parseExpression(m.group(2) + negationReplacer + insideParsedExpression);
+        } else {
+          parsedExpression = parseExpression(m.group(3));
+        }
 
-      expression = expression.replace(m.group().substring(1), parsedExpression);
+        expression = expression.replace(m.group().substring(1), parsedExpression);
+      } catch (IndexOutOfBoundsException | IllegalStateException e) {
+        // just keep moving...
+      }
+    }
+
+    // Are there more groupings that need to be processed
+    m = p.matcher(expression);
+
+    if(m.find()) {
+      expression = preprocessExpression(expression);
     }
 
     return expression;
